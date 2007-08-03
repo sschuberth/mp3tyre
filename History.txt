@@ -1,0 +1,53 @@
+Legend:
+-------
+
+(+) Added
+(*) Changed
+(-) Fixed
+
+History:
+--------
+
+mp3TYRE-9.2006.feb.19
++ Optionally write out a cleaned MP3 file.
+* Also search for the mp3PRO plug-in in the local directory.
+* Reformatted some output messages
+
+mp3TYRE-8.2006.jan.15
+* Made mp3TYRE compile with FreePascal 2.0.2.
+
+mp3TYRE-7.2005.nov.30
+* Changed some information printed out to screen
+
+mp3TYRE-6.2004.jan.09
+* More space-saving statistics layout
+* Minor speed improvements
+* Source code clean-up
+- Support for VBR mp3PRO files
+
+mp3TYRE-5.2003.jul.13
++ Command line switch to enable printing of full paths
++ Skipping of junk data (e.g. broken MP3 frames) at the beginning of files
++ Added support for MPEG 2.5 audio frames
+* More detailed analyzing information and improved statistics
+* Better handling of corrupted files
+* Lots of internal changes
+- Analyzing files which contain special characters (e.g. "[") in their names
+
+mp3TYRE-4.2003.jul.09
+- Processing of files smaller than 64kb
+
+mp3TYRE-3.2003.mai.06
++ Default file mask is "*.mp3"
++ Command line switches to separately include / exclude processing of CBR, VBR and mp3PRO files
+* Source code clean-up
+* Cosmetic improvements
+* Simulation mode is enabled by default
+- Command line parsing of directories
+
+mp3TYRE-2.2003.apr.24
+- Recognize MP3 files with padding between ID3v2 tag and first frame
+- Recognize MP3 files with RIFF / Wave header before first frame
+
+mp3TYRE-1.2002.aug.27
++ First public version
