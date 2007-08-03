@@ -1,0 +1,138 @@
+<?xml version="1.0"?>
+<CONFIG>
+  <ProjectOptions>
+    <PathDelim Value="\"/>
+    <Version Value="5"/>
+    <General>
+      <MainUnit Value="0"/>
+      <IconPath Value="./"/>
+      <TargetFileExt Value=".exe"/>
+      <Title Value="mp3TYRE - MP3 TYpe REnamer"/>
+      <ActiveEditorIndexAtStart Value="0"/>
+    </General>
+    <Units Count="5">
+      <Unit0>
+        <CursorPos X="54" Y="416"/>
+        <EditorIndex Value="0"/>
+        <Filename Value="mp3TYRE.dpr"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <TopLine Value="400"/>
+        <UsageCount Value="20"/>
+      </Unit0>
+      <Unit1>
+        <CursorPos X="1" Y="50"/>
+        <EditorIndex Value="4"/>
+        <Filename Value="FileUtils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <TopLine Value="34"/>
+        <UnitName Value="FileUtils"/>
+        <UsageCount Value="20"/>
+      </Unit1>
+      <Unit2>
+        <CursorPos X="1" Y="351"/>
+        <EditorIndex Value="2"/>
+        <Filename Value="MP3Struct.pas"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <TopLine Value="339"/>
+        <UnitName Value="MP3Struct"/>
+        <UsageCount Value="20"/>
+      </Unit2>
+      <Unit3>
+        <CursorPos X="12" Y="287"/>
+        <EditorIndex Value="1"/>
+        <Filename Value="Masks.pas"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <TopLine Value="269"/>
+        <UnitName Value="Masks"/>
+        <UsageCount Value="20"/>
+      </Unit3>
+      <Unit4>
+        <CursorPos X="66" Y="84"/>
+        <EditorIndex Value="3"/>
+        <Filename Value="WinampPlugin.pas"/>
+        <IsPartOfProject Value="True"/>
+        <Loaded Value="True"/>
+        <TopLine Value="72"/>
+        <UnitName Value="WinampPlugin"/>
+        <UsageCount Value="20"/>
+      </Unit4>
+    </Units>
+    <PublishOptions>
+      <Version Value="2"/>
+      <IgnoreBinaries Value="False"/>
+      <IncludeFileFilter Value="*.(pas|pp|inc|lfm|lpr|lrs|lpi|lpk|sh|xml)"/>
+      <ExcludeFileFilter Value="*.(bak|ppu|ppw|o|so);*~;backup"/>
+    </PublishOptions>
+    <RunParams>
+      <local>
+        <FormatVersion Value="1"/>
+        <CommandLineParams Value="comma-loveloop.provbr.mp3"/>
+        <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
+      </local>
+    </RunParams>
+    <JumpHistory Count="0" HistoryIndex="-1"/>
+  </ProjectOptions>
+  <CompilerOptions>
+    <Version Value="5"/>
+    <PathDelim Value="\"/>
+    <Target>
+      <Filename Value="mp3TYRE_FPC"/>
+    </Target>
+    <Parsing>
+      <SyntaxOptions>
+        <CStyleOperator Value="False"/>
+        <DelphiCompat Value="True"/>
+      </SyntaxOptions>
+    </Parsing>
+    <CodeGeneration>
+      <SmartLinkUnit Value="True"/>
+      <Generate Value="Faster"/>
+      <TargetProcessor Value="3"/>
+      <Optimizations>
+        <VariablesInRegisters Value="True"/>
+        <OptimizationLevel Value="2"/>
+      </Optimizations>
+    </CodeGeneration>
+    <Linking>
+      <Debugging>
+        <UseLineInfoUnit Value="False"/>
+        <StripSymbols Value="True"/>
+      </Debugging>
+      <LinkSmart Value="True"/>
+    </Linking>
+    <Other>
+      <WriteFPCLogo Value="False"/>
+      <CompilerPath Value="$(CompPath)"/>
+    </Other>
+  </CompilerOptions>
+  <Debugging>
+    <BreakPoints Count="1">
+      <Item1>
+        <Source Value="mp3TYRE.dpr"/>
+        <Line Value="189"/>
+      </Item1>
+    </BreakPoints>
+    <Watches Count="2">
+      <Item1>
+        <Expression Value="FileName"/>
+        <Enabled Value="False"/>
+      </Item1>
+      <Item2>
+        <Expression Value="1+2"/>
+        <Enabled Value="False"/>
+      </Item2>
+    </Watches>
+    <Exceptions Count="2">
+      <Item1>
+        <Name Value="ECodetoolError"/>
+      </Item1>
+      <Item2>
+        <Name Value="EFOpenError"/>
+      </Item2>
+    </Exceptions>
+  </Debugging>
+</CONFIG>
