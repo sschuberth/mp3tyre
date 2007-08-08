@@ -1,0 +1,11 @@
+While for the original version (up to the "mp3TYRE-9.2006.feb.19" distribution)
+Delphi 6 Professional was used for development, the sources were also successfully
+compiled using Delphi 2005 Personal (which is freely distributed with computer
+magazines, but not available for download). The more recent Turbo Delphi Explorer
+(http://www.turboexplorer.com/delphi/) has not been tried yet.
+
+Current development is done with Free Pascal / Lazarus as it is Open Source and
+has a 64-bit compiler freely available. You may get a recent snapshot version of
+Lazarus incl. Free Pascal from here:
+
+ftp://ftp.hu.freepascal.org/pub/lazarus/Lazarus-0.9.23-fpc-2.1.5-20070806-win32.exe
