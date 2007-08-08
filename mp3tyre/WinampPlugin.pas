@@ -201,17 +201,6 @@ implementation
 uses
     SysUtils;
 
-{$IFDEF FPC}
-function SafeLoadLibrary(FileName:string):Longword;
-var
-    p:PChar;
-begin
-    p:=StrAlloc(Length(FileName)+1);
-    Result:=LoadLibrary(StrPCopy(p,FileName));
-    StrDispose(p);
-end;
-{$ENDIF}
-
 function LoadOutModule(FileName:string):Boolean;
 type
     GetOutModuleFunc=function:OutModulePtr; stdcall;

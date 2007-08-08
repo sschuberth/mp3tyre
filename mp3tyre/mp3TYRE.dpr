@@ -1,17 +1,11 @@
 program mp3TYRE;
 
 {$APPTYPE CONSOLE}
-{$IFNDEF FPC}
-{$WARN SYMBOL_PLATFORM OFF}
-{$ENDIF}
 
 uses
-    Classes,Masks,
-    Registry,SysUtils,Windows,
+    Classes,
+    Registry,StrUtils,SysUtils,Windows,
     FileUtils,MP3Struct,WinampPlugin;
-
-{$I mp3TYRE.lc}
-    Version='9';
 
 type
     TMP3FileType=(mftNone,mftCBR,mftProCBR,mftVBR,mftProVBR);
@@ -34,11 +28,20 @@ var
     MP3Extensions:TStringList;
 
 const
+    ReleaseNumber='10';
+    CompileDate={$I %DATE%};
     mp3PROPlugIn='in_mp3PRO.dll';
 
 function GetVersionString:string;
+const
+    Month:array[1..12] of string=(
+        'jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'
+    );
 begin
-    Result:=Version+'.'+LowerCase(__COMPILE_DATETIME_AS_STRING__);
+    Result:=ReleaseNumber
+        +'.'+ExtractDelimited(1,CompileDate,['/'])
+        +'.'+Month[StrToInt(ExtractDelimited(2,CompileDate,['/']))]
+        +'.'+ExtractDelimited(3,CompileDate,['/']);
 end;
 
 function CheckMP3File(FileName:string):TMP3CheckResult;
@@ -225,23 +228,16 @@ const
 var
     Title:array[0..2047] of Char;
     LengthInMS:Integer;
-{$IFDEF FPC}
-    p:PChar;
-{$ENDIF}
 begin
+    Title[0]:=#0;
+    LengthInMS:=0;
     if InputPlugin<>nil then begin
         // Playback will crash for invalid (very small) MP3 files.
-{$IFDEF FPC}
-        p:=StrAlloc(Length(FileName)+1);
-        InputPlugin^.Play(StrPCopy(p,FileName));
-        StrDispose(p);
-{$ELSE}
         InputPlugin^.Play(PChar(FileName));
-{$ENDIF}
         InputPlugin^.GetFileInfo(nil,Title,LengthInMS);
         InputPlugin^.Stop;
     end;
-    Result:=(StrComp(StrEnd(Title)-StrLen(mp3PRO),mp3PRO)=0);
+    Result:=(StrComp(StrEnd(Title)-StrLen(mp3PRO),mp3PRO)=0) and (LengthInMS>0);
 end;
 
 function IdentifyMP3File(FileName:string):TMP3CheckResult;
@@ -466,7 +462,7 @@ end;
 
 begin
     WriteLn('mp3TYRE (MP3 TYpe REnamer) version ',GetVersionString);
-    WriteLn('This freeware is (c)opyrighted 2002-2006 by S. Schuberth <sschuberth@gmail.com>',#13,#10);
+    WriteLn('(C)opyright 2002-2007 by S. Schuberth <sschuberth_AT_gmail_DOT_com>',#13,#10);
 
     if ParamCount>0 then begin
         // In order to detect mp3PRO files, Coding Technologies' Winamp plug-in
