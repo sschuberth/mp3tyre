@@ -1,3 +1,10 @@
+{
+    MP3 file format definitions
+    
+    All MP3 related structures like tags and frames are encapsulated in classes
+    here along with methods to read, write and verify them.
+}
+
 unit MP3Struct;
 
 interface
@@ -211,12 +218,14 @@ begin
     Result:=False;
 
     // Do not write out an invalid tag.
-    if not IsValid then
+    if not IsValid then begin
         Exit;
+    end;
 
     BytesWritten:=MP3.Write(Header,ID3v1TagSize);
-    if BytesWritten<>ID3v1TagSize then
+    if BytesWritten<>ID3v1TagSize then begin
         Exit;
+    end;
 
     Result:=True;
 end;
@@ -270,10 +279,12 @@ begin
         if Longword(BytesRead)<>GetDataSize then begin
             MP3.Seek(-BytesRead,soFromCurrent);
             Finalize(Data);
-        end else
+        end else begin
             Result:=True;
-    end else
+        end;
+    end else begin
         MP3.Seek(-SizeOf(TID3v2Header),soFromCurrent);
+    end;
 end;
 
 function TID3v2Tag.Write(MP3:TFileStream):Boolean;
@@ -283,23 +294,27 @@ begin
     Result:=False;
 
     // Do not write out an invalid tag.
-    if not isValid then
+    if not isValid then begin
         Exit;
+    end;
 
     // Write first POD (Plain Old Data) part of the tag header.
     BytesWritten:=MP3.Write(Header,SizeOf(TID3v2Header)-SizeOf(Header.Size));
-    if BytesWritten<>SizeOf(TID3v2Header)-SizeOf(Header.Size) then
+    if BytesWritten<>SizeOf(TID3v2Header)-SizeOf(Header.Size) then begin
         Exit;
+    end;
 
     // Write the second part of the tag header (the field describing its size).
     BytesWritten:=MP3.Write(Header.Size.Data,SizeOf(Header.Size.Data));
-    if BytesWritten<>SizeOf(Header.Size.Data) then
+    if BytesWritten<>SizeOf(Header.Size.Data) then begin
         Exit;
+    end;
 
     // Write the tag data.
     BytesWritten:=MP3.Write(Data[0],GetDataSize);
-    if Longword(BytesWritten)<>GetDataSize then
+    if Longword(BytesWritten)<>GetDataSize then begin
         Exit;
+    end;
 
     Result:=True;
 end;
@@ -363,8 +378,9 @@ begin
     end;
 
     BytesRead:=Stream.Read(Chunk,SizeOf(Chunk));
-    if BytesRead<>SizeOf(Chunk) then
+    if BytesRead<>SizeOf(Chunk) then begin
         Stream.Seek(-BytesRead,soFromCurrent);
+    end;
 end;
 
 function TRIFFFile.IsValid:Boolean;
@@ -414,8 +430,9 @@ end;
 function TRIFFFile.SearchChunk(ChunkID:Longword):Boolean;
 begin
     Result:=True;
-    while (GetChunkID<>ChunkID) and Result do
+    while (GetChunkID<>ChunkID) and Result do begin
         Result:=SkipChunk;
+    end;
 end;
 
 // TMP3Frame
@@ -448,10 +465,12 @@ begin
         if BytesRead<>GetDataSize then begin
             MP3.Seek(-BytesRead,soFromCurrent);
             Finalize(Data);
-        end else
+        end else begin
             Result:=True;
-    end else
+        end;
+    end else begin
         MP3.Seek(-SizeOf(TMP3FrameHeader),soFromCurrent);
+    end;
 end;
 
 function TMP3Frame.Write(MP3:TFileStream):Boolean;
@@ -470,13 +489,15 @@ begin
 
     // Write the frame header.
     BytesWritten:=MP3.Write(Header,SizeOf(TMP3FrameHeader));
-    if BytesWritten<>SizeOf(TMP3FrameHeader) then
+    if BytesWritten<>SizeOf(TMP3FrameHeader) then begin
         Exit;
+    end;
 
     // Write the frame data.
     BytesWritten:=MP3.Write(Data[0],DataSize);
-    if BytesWritten<>DataSize then
+    if BytesWritten<>DataSize then begin
         Exit;
+    end;
 
     Result:=True;
 end;
@@ -499,15 +520,17 @@ begin
     // For details refer to the Xing VBR header SDK which is still available at:
     // <http://docs.real.com/docs/xingtech/vbrheadersdk.zip>
     if GetVersion=1 then begin
-        if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then
+        if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then begin
             Offset:=32
-        else
+        end else begin
             Offset:=17;
+        end;
     end else begin
-        if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then
+        if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then begin
             Offset:=17
-        else
+        end else begin
             Offset:=9;
+        end;
     end;
     VBRHeader:=@Data[Offset];
     Result:=(VBRHeader^=Xing);
@@ -650,8 +673,9 @@ begin
         BytesPerSlot:=1;
     end;
 
-    if GetVersion>1 then
+    if GetVersion>1 then begin
         Factor:=Factor div 2;
+    end;
     Result:=((Factor*GetBitRate*1000 div GetSampleRate)+Ord(IsPadded))*BytesPerSlot;
 
     // Subtract the frame header size from the frame length.
