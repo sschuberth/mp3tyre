@@ -10,57 +10,6 @@
       <Title Value="mp3TYRE - MP3 TYpe REnamer"/>
       <ActiveEditorIndexAtStart Value="0"/>
     </General>
-    <Units Count="5">
-      <Unit0>
-        <CursorPos X="54" Y="416"/>
-        <EditorIndex Value="0"/>
-        <Filename Value="mp3TYRE.dpr"/>
-        <IsPartOfProject Value="True"/>
-        <Loaded Value="True"/>
-        <TopLine Value="400"/>
-        <UsageCount Value="20"/>
-      </Unit0>
-      <Unit1>
-        <CursorPos X="1" Y="50"/>
-        <EditorIndex Value="4"/>
-        <Filename Value="FileUtils.pas"/>
-        <IsPartOfProject Value="True"/>
-        <Loaded Value="True"/>
-        <TopLine Value="34"/>
-        <UnitName Value="FileUtils"/>
-        <UsageCount Value="20"/>
-      </Unit1>
-      <Unit2>
-        <CursorPos X="1" Y="351"/>
-        <EditorIndex Value="2"/>
-        <Filename Value="MP3Struct.pas"/>
-        <IsPartOfProject Value="True"/>
-        <Loaded Value="True"/>
-        <TopLine Value="339"/>
-        <UnitName Value="MP3Struct"/>
-        <UsageCount Value="20"/>
-      </Unit2>
-      <Unit3>
-        <CursorPos X="12" Y="287"/>
-        <EditorIndex Value="1"/>
-        <Filename Value="Masks.pas"/>
-        <IsPartOfProject Value="True"/>
-        <Loaded Value="True"/>
-        <TopLine Value="269"/>
-        <UnitName Value="Masks"/>
-        <UsageCount Value="20"/>
-      </Unit3>
-      <Unit4>
-        <CursorPos X="66" Y="84"/>
-        <EditorIndex Value="3"/>
-        <Filename Value="WinampPlugin.pas"/>
-        <IsPartOfProject Value="True"/>
-        <Loaded Value="True"/>
-        <TopLine Value="72"/>
-        <UnitName Value="WinampPlugin"/>
-        <UsageCount Value="20"/>
-      </Unit4>
-    </Units>
     <PublishOptions>
       <Version Value="2"/>
       <IgnoreBinaries Value="False"/>
@@ -74,13 +23,182 @@
         <LaunchingApplication PathPlusParams="/usr/X11R6/bin/xterm -T 'Lazarus Run Output' -e $(LazarusDir)/tools/runwait.sh $(TargetCmdLine)"/>
       </local>
     </RunParams>
-    <JumpHistory Count="0" HistoryIndex="-1"/>
+    <Units Count="5">
+      <Unit0>
+        <Filename Value="mp3TYRE.dpr"/>
+        <IsPartOfProject Value="True"/>
+        <CursorPos X="29" Y="38"/>
+        <TopLine Value="22"/>
+        <EditorIndex Value="0"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit0>
+      <Unit1>
+        <Filename Value="FileUtils.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="FileUtils"/>
+        <CursorPos X="1" Y="1"/>
+        <TopLine Value="1"/>
+        <EditorIndex Value="3"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit1>
+      <Unit2>
+        <Filename Value="MP3Struct.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="MP3Struct"/>
+        <CursorPos X="9" Y="35"/>
+        <TopLine Value="18"/>
+        <EditorIndex Value="1"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit2>
+      <Unit3>
+        <Filename Value="Masks.pas"/>
+        <UnitName Value="Masks"/>
+        <CursorPos X="12" Y="287"/>
+        <TopLine Value="269"/>
+        <UsageCount Value="20"/>
+      </Unit3>
+      <Unit4>
+        <Filename Value="WinampPlugin.pas"/>
+        <IsPartOfProject Value="True"/>
+        <UnitName Value="WinampPlugin"/>
+        <CursorPos X="9" Y="182"/>
+        <TopLine Value="165"/>
+        <EditorIndex Value="2"/>
+        <UsageCount Value="22"/>
+        <Loaded Value="True"/>
+      </Unit4>
+    </Units>
+    <JumpHistory Count="30" HistoryIndex="29">
+      <Position1>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="468" Column="1" TopLine="447"/>
+      </Position1>
+      <Position2>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="328" Column="31" TopLine="316"/>
+      </Position2>
+      <Position3>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position3>
+      <Position4>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="18" Column="22" TopLine="1"/>
+      </Position4>
+      <Position5>
+        <Filename Value="MP3Struct.pas"/>
+        <Caret Line="351" Column="1" TopLine="339"/>
+      </Position5>
+      <Position6>
+        <Filename Value="WinampPlugin.pas"/>
+        <Caret Line="84" Column="66" TopLine="72"/>
+      </Position6>
+      <Position7>
+        <Filename Value="WinampPlugin.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position7>
+      <Position8>
+        <Filename Value="FileUtils.pas"/>
+        <Caret Line="50" Column="1" TopLine="34"/>
+      </Position8>
+      <Position9>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="229" Column="1" TopLine="234"/>
+      </Position9>
+      <Position10>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="455" Column="18" TopLine="433"/>
+      </Position10>
+      <Position11>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="30" Column="1" TopLine="1"/>
+      </Position11>
+      <Position12>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position12>
+      <Position13>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="33" Column="6" TopLine="14"/>
+      </Position13>
+      <Position14>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="42" Column="6" TopLine="23"/>
+      </Position14>
+      <Position15>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="220" Column="6" TopLine="201"/>
+      </Position15>
+      <Position16>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="285" Column="10" TopLine="266"/>
+      </Position16>
+      <Position17>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="288" Column="46" TopLine="269"/>
+      </Position17>
+      <Position18>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="515" Column="70" TopLine="477"/>
+      </Position18>
+      <Position19>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="31" Column="21" TopLine="1"/>
+      </Position19>
+      <Position20>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="455" Column="67" TopLine="438"/>
+      </Position20>
+      <Position21>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position21>
+      <Position22>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="37" Column="1" TopLine="16"/>
+      </Position22>
+      <Position23>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="31" Column="23" TopLine="18"/>
+      </Position23>
+      <Position24>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="225" Column="37" TopLine="211"/>
+      </Position24>
+      <Position25>
+        <Filename Value="WinampPlugin.pas"/>
+        <Caret Line="204" Column="1" TopLine="185"/>
+      </Position25>
+      <Position26>
+        <Filename Value="MP3Struct.pas"/>
+        <Caret Line="1" Column="1" TopLine="1"/>
+      </Position26>
+      <Position27>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="225" Column="5" TopLine="208"/>
+      </Position27>
+      <Position28>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="39" Column="44" TopLine="22"/>
+      </Position28>
+      <Position29>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="7" Column="23" TopLine="1"/>
+      </Position29>
+      <Position30>
+        <Filename Value="mp3TYRE.dpr"/>
+        <Caret Line="39" Column="23" TopLine="22"/>
+      </Position30>
+    </JumpHistory>
   </ProjectOptions>
   <CompilerOptions>
     <Version Value="5"/>
     <PathDelim Value="\"/>
     <Target>
-      <Filename Value="mp3TYRE_FPC"/>
+      <Filename Value="mp3TYRE"/>
     </Target>
     <Parsing>
       <SyntaxOptions>
