@@ -1,3 +1,10 @@
+{
+    File handling related utility implementations
+    
+    This is a wrapper class around FindFirst / FindNext to (recursively) search
+    for files matching a given mask and / or attributes.
+}
+
 unit FileUtils;
 
 interface
@@ -58,39 +65,53 @@ end;
 function TFileSearch.GetAttributes:TAttributeSet;
 begin
     Result:=[];
-    if (FAttributes and SysUtils.faReadOnly)=SysUtils.faReadOnly then
+    if (FAttributes and SysUtils.faReadOnly)=SysUtils.faReadOnly then begin
         Include(Result,faReadOnly);
-    if (FAttributes and SysUtils.faHidden)=SysUtils.faHidden then
+    end;
+    if (FAttributes and SysUtils.faHidden)=SysUtils.faHidden then begin
         Include(Result,faHidden);
-    if (FAttributes and SysUtils.faSysFile)=SysUtils.faSysFile then
+    end;
+    if (FAttributes and SysUtils.faSysFile)=SysUtils.faSysFile then begin
         Include(Result,faSysFile);
-    if (FAttributes and SysUtils.faVolumeID)=SysUtils.faVolumeID then
+    end;
+    if (FAttributes and SysUtils.faVolumeID)=SysUtils.faVolumeID then begin
         Include(Result,faVolumeID);
-    if (FAttributes and SysUtils.faDirectory)=SysUtils.faDirectory then
+    end;
+    if (FAttributes and SysUtils.faDirectory)=SysUtils.faDirectory then begin
         Include(Result,faDirectory);
-    if (FAttributes and SysUtils.faArchive)=SysUtils.faArchive then
+    end;
+    if (FAttributes and SysUtils.faArchive)=SysUtils.faArchive then begin
         Include(Result,faArchive);
-    if (FAttributes and SysUtils.faAnyFile)=SysUtils.faAnyFile then
+    end;
+    if (FAttributes and SysUtils.faAnyFile)=SysUtils.faAnyFile then begin
         Include(Result,faAnyFile);
+    end;
 end;
 
 procedure TFileSearch.SetAttributes(Attributes:TAttributeSet);
 begin
     FAttributes:=0;
-    if (faReadOnly in Attributes) then
+    if (faReadOnly in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faReadOnly;
-    if (faHidden in Attributes) then
+    end;
+    if (faHidden in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faHidden;
-    if (faSysFile in Attributes) then
+    end;
+    if (faSysFile in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faSysFile;
-    if (faVolumeID in Attributes) then
+    end;
+    if (faVolumeID in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faVolumeID;
-    if (faDirectory in Attributes) then
+    end;
+    if (faDirectory in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faDirectory;
-    if (faArchive in Attributes) then
+    end;
+    if (faArchive in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faArchive;
-    if (faAnyFile in Attributes) then
+    end;
+    if (faAnyFile in Attributes) then begin
         FAttributes:=FAttributes or SysUtils.faAnyFile;
+    end;
 end;
 
 function TFileSearch.GetRecurse:Boolean;
@@ -122,14 +143,16 @@ begin
         end;
     end;
 
-    if not FRecurse then
+    if not FRecurse then begin
         Exit;
+    end;
 
     if FindFirst(Directory+'*.*',SysUtils.faDirectory,FileInfo)=0 then begin
         try
             repeat
-                if ((FileInfo.Attr and SysUtils.faDirectory)=SysUtils.faDirectory) and (FileInfo.Name[1]<>'.') then
+                if ((FileInfo.Attr and SysUtils.faDirectory)=SysUtils.faDirectory) and (FileInfo.Name[1]<>'.') then begin
                     Search(IncludeTrailingPathDelimiter(Directory+FileInfo.Name),Mask);
+                end;
             until FindNext(FileInfo)<>0;
         finally
             SysUtils.FindClose(FileInfo);
@@ -142,8 +165,9 @@ var
     Directory:string;
 begin
     Directory:=IncludeTrailingPathDelimiter(ExtractFilePath(Path));
-    if Directory='\' then
+    if Directory='\' then begin
         Directory:='';
+    end;
     Search(Directory,ExtractFileName(Path));
 end;
 
