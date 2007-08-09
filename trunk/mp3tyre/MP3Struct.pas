@@ -1,6 +1,6 @@
 {
     MP3 file format definitions
-    
+
     All MP3 related structures like tags and frames are encapsulated in classes
     here along with methods to read, write and verify them.
 }
@@ -521,13 +521,13 @@ begin
     // <http://docs.real.com/docs/xingtech/vbrheadersdk.zip>
     if GetVersion=1 then begin
         if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then begin
-            Offset:=32
+            Offset:=32;
         end else begin
             Offset:=17;
         end;
     end else begin
         if GetChannelMode<>CHANNEL_MODE_SINGLEMONO then begin
-            Offset:=17
+            Offset:=17;
         end else begin
             Offset:=9;
         end;
