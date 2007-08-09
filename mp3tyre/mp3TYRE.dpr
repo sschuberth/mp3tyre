@@ -3,8 +3,7 @@ program mp3TYRE;
 {$APPTYPE CONSOLE}
 
 uses
-    Classes,
-    Registry,StrUtils,SysUtils,Windows,
+    Classes,Registry,StrUtils,SysUtils,Windows,
     FileUtils,MP3Struct,WinampPlugin;
 
 type
@@ -66,8 +65,9 @@ begin
     Result.HasJunkData:=False;
 
     Input:=TFileStream.Create(FileName,fmOpenRead or fmShareDenyWrite);
-    if CleanFiles then
+    if CleanFiles then begin
         Output:=TFileStream.Create(FileName+'.cleaned',fmCreate or fmShareExclusive);
+    end;
 
     // Skip any ID3v2 tags.
     Tag2:=TID3v2Tag.Create;
@@ -75,9 +75,12 @@ begin
         WriteLn('Skipping ID3v',Tag2.GetVersionString,' tag of ',SizeOf(TID3v2Header)+Tag2.GetDataSize,' bytes.');
         if Result.HasID3v2Tag=False then begin
             // Write out only the first tag that has been found.
-            if CleanFiles then
-                if not Tag2.Write(Output) then
+            if CleanFiles then begin
+                // Be sure the tag is only written if CleanFiles is enabled.
+                if not Tag2.Write(Output) then begin
                     WriteLn('Error writing tag to cleaned output file.');
+                end;
+            end;
             Result.HasID3v2Tag:=True;
         end;
     end;
@@ -89,8 +92,9 @@ begin
         // to 64kb of zero-bytes to be skipped.
         New(Buffer);
         BytesRead:=Input.Read(Buffer^,SizeOf(Buffer^));
-        while (PadBytes<BytesRead) and (Buffer^[PadBytes]=0) do
+        while (PadBytes<BytesRead) and (Buffer^[PadBytes]=0) do begin
             Inc(PadBytes);
+        end;
         Input.Seek(-BytesRead+PadBytes,soFromCurrent);
         if PadBytes>0 then begin
             WriteLn('Skipping non-standard tag padding of ',PadBytes,' bytes.');
@@ -105,8 +109,9 @@ begin
         if RIFF.SearchChunk(data) then begin
             WriteLn('Skipping WAVE header (file size is ',RIFF.GetFileSize,' bytes).');
             Result.HasWAVEHeader:=True;
-        end else
+        end else begin
             WriteLn('Found broken WAVE header at offset ',Input.Position,'.');
+        end;
     end;
     RIFF.Free;
 
@@ -124,16 +129,18 @@ begin
             end;
 
             if Frame.IsValid then begin
-                if Frame.IsVBR then
-                    Result.FileType:=mftVBR
-                else
+                if Frame.IsVBR then begin
+                    Result.FileType:=mftVBR;
+                end else begin
                     Result.FileType:=mftCBR;
+                end;
 
                 Version:=Frame.GetVersionName;
 
                 // Check two more frames to be sure this really is an MP3 file.
-                if (not Frame.Read(Input)) or (not Frame.Read(Input)) then
+                if (not Frame.Read(Input)) or (not Frame.Read(Input)) then begin
                     Result.FileType:=mftNone;
+                end;
             end;
         until (Result.FileType<>mftNone) or (JunkBytes=MaxJunkBytes);
 
@@ -145,8 +152,9 @@ begin
             WriteLn('Found ',Version,' audio frame.');
         end;
     except
-        on ERangeError do
+        on ERangeError do begin
             WriteLn('Unexpected end of file.');
+        end;
     end;
 
     if CleanFiles then begin
@@ -161,9 +169,12 @@ begin
             end;
 
             // We do not care for errors here.
-	    if JunkBytes<MaxJunkBytes then
-                if not Frame.Write(Output) then
+            if JunkBytes<MaxJunkBytes then begin
+                // Be sure the tag is only written if we did not reach MaxJunkBytes.
+                if not Frame.Write(Output) then begin
                     WriteLn('Error writing frame to cleaned output file.');
+                end;
+            end;
         until JunkBytes=MaxJunkBytes;
 
         // If there is more data, and this data is an ID3v1 tag, copy it, too.
@@ -211,14 +222,16 @@ begin
             Init;
         end;
         WriteLn('Input plug-in "',InputPlugin^.Description,'" successfully loaded.');
-    end else
+    end else begin
         WriteLn('Failed to load plug-in.');
+    end;
 end;
 
 procedure FreeInputPlugin;
 begin
-    if InputPlugin<>nil then
+    if InputPlugin<>nil then begin
         InputPlugin^.Quit;
+    end;
     FreeInModule;
 end;
 
@@ -243,8 +256,9 @@ end;
 function IdentifyMP3File(FileName:string):TMP3CheckResult;
 begin
     Result:=CheckMP3File(FileName);
-    if (Result.FileType<>mftNone) and IsPROFile(FileName) then
+    if (Result.FileType<>mftNone) and IsPROFile(FileName) then begin
         Inc(Result.FileType);
+    end;
 end;
 
 function ShortenString(Prefix,Text:string;MaxLength:Integer):string;
@@ -273,8 +287,9 @@ begin
         if LowerCase(Copy(BaseName,l+1,Length(MP3Extensions[i])))=LowerCase(MP3Extensions[i]) then begin
             BaseName:=Copy(BaseName,1,l);
             i:=0;
-        end else
+        end else begin
             Inc(i);
+        end;
     end;
 
     Result:=RenameFile(FileName,BaseName+MP3Extensions[Ord(FileType)-1]+Suffix);
@@ -301,8 +316,9 @@ var
         i:Integer;
         CheckResult:TMP3CheckResult;
     begin
-        if DirectoryExists(Path) then
+        if DirectoryExists(Path) then begin
             Path:=IncludeTrailingPathDelimiter(Path)+'*.mp3';
+        end;
 
         FileSearch:=TFileSearch.Create;
         FileSearch.Recurse:=RecurseDirectory;
@@ -311,10 +327,11 @@ var
             Path:=ExpandFileName(FileSearch.List[i]);
 
             Write(#13,#10,'Analyzing file "');
-            if FullPath then
-                Write(Path)
-            else
+            if FullPath then begin
+                Write(Path);
+            end else begin
                 Write(ShortenString('[...]',Path,80-16-2-1));
+            end;
             WriteLn('".');
 
             CheckResult:=IdentifyMP3File(Path);
@@ -332,13 +349,16 @@ var
                     if AddTypeExtension(Path,CheckResult.FileType) then begin
                         Inc(RenameCount[Ord(CheckResult.FileType)]);
                         Write('The file has successfully');
-                    end else
+                    end else begin
                         Write('The file has not');
+                    end;
                     WriteLn(' been renamed.');
-                end else
+                end else begin
                     WriteLn('The file has not been renamed (simulation mode).');
-            end else
+                end;
+            end else begin
                 WriteLn(', skipping.');
+            end;
         end;
         FileSearch.Free;
     end;
@@ -377,72 +397,73 @@ begin
             if Length(Parameter)=3 then begin
                 // Toggle clean flag.
                 if Parameter[2]='c' then begin
-                    if Parameter[3]='+' then
-                        CleanFiles:=True
-                    else
-                        if Parameter[3]='-' then
-                            CleanFiles:=False;
+                    if Parameter[3]='+' then begin
+                        CleanFiles:=True;
+                    end else if Parameter[3]='-' then begin
+                        CleanFiles:=False;
+                    end;
                 end;
                 // Toggle path flag.
                 if Parameter[2]='p' then begin
-                    if Parameter[3]='+' then
-                        FullPath:=True
-                    else
-                        if Parameter[3]='-' then
-                            FullPath:=False;
+                    if Parameter[3]='+' then begin
+                        FullPath:=True;
+                    end else if Parameter[3]='-' then begin
+                        FullPath:=False;
+                    end;
                 end;
                 // Toggle recurse flag.
                 if Parameter[2]='r' then begin
-                    if Parameter[3]='+' then
-                        RecurseDirectory:=True
-                    else
-                        if Parameter[3]='-' then
-                            RecurseDirectory:=False;
+                    if Parameter[3]='+' then begin
+                        RecurseDirectory:=True;
+                    end else if Parameter[3]='-' then begin
+                        RecurseDirectory:=False;
+                    end;
                 end;
                 // Toggle simulate flag.
                 if Parameter[2]='s' then begin
-                    if Parameter[3]='+' then
-                        SimulateRename:=True
-                    else
-                        if Parameter[3]='-' then
-                            SimulateRename:=False;
+                    if Parameter[3]='+' then begin
+                        SimulateRename:=True;
+                    end else if Parameter[3]='-' then begin
+                        SimulateRename:=False;
+                    end;
                 end;
             end else begin
                 // Toggle processing of CBR files.
                 if Copy(Parameter,2,3)='cbr' then begin
-                    if Parameter[5]='+' then
-                        Include(ProcessedTypes,mftCBR)
-                    else
-                        if Parameter[5]='-' then
-                            Exclude(ProcessedTypes,mftCBR);
+                    if Parameter[5]='+' then begin
+                        Include(ProcessedTypes,mftCBR);
+                    end else if Parameter[5]='-' then begin
+                        Exclude(ProcessedTypes,mftCBR);
+                    end;
                 end;
                 // Toggle processing of VBR files.
                 if Copy(Parameter,2,3)='vbr' then begin
-                    if Parameter[5]='+' then
-                        Include(ProcessedTypes,mftVBR)
-                    else
-                        if Parameter[5]='-' then
-                            Exclude(ProcessedTypes,mftVBR);
+                    if Parameter[5]='+' then begin
+                        Include(ProcessedTypes,mftVBR);
+                    end else if Parameter[5]='-' then begin
+                        Exclude(ProcessedTypes,mftVBR);
+                    end;
                 end;
                 // Toggle processing of CBR mp3PRO files.
                 if Copy(Parameter,2,6)='procbr' then begin
-                    if Parameter[8]='+' then
-                        Include(ProcessedTypes,mftProCBR)
-                    else
-                        if Parameter[8]='-' then
-                            Exclude(ProcessedTypes,mftProCBR);
+                    if Parameter[8]='+' then begin
+                        Include(ProcessedTypes,mftProCBR);
+                    end else if Parameter[8]='-' then begin
+                        Exclude(ProcessedTypes,mftProCBR);
+                    end;
                 end;
                 // Toggle processing of VBR mp3PRO files.
                 if Copy(Parameter,2,6)='provbr' then begin
-                    if Parameter[8]='+' then
-                        Include(ProcessedTypes,mftProVBR)
-                    else
-                        if Parameter[8]='-' then
-                            Exclude(ProcessedTypes,mftProVBR);
+                    if Parameter[8]='+' then begin
+                        Include(ProcessedTypes,mftProVBR);
+                    end else if Parameter[8]='-' then begin
+                        Exclude(ProcessedTypes,mftProVBR);
+                    end;
                 end;
             end;
-        end else
+        end else begin
             RenameFilesByType(Parameter);
+        end;
     end;
 
     WriteLn;
@@ -480,8 +501,9 @@ begin
             IndicateMP3Pro:=PluginSettings.ReadInteger('Indicate mp3PRO');
             PluginSettings.WriteInteger('Indicate mp3PRO',1);
         end;
-        if not LoadInputPlugin('Winamp Plug-ins\'+mp3PROPlugIn) then
+        if not LoadInputPlugin('Winamp Plug-ins\'+mp3PROPlugIn) then begin
             LoadInputPlugin(mp3PROPlugIn);
+        end;
 
         MP3Extensions:=TStringList.Create;
         MP3Extensions.Add('.cbr');
@@ -499,13 +521,7 @@ begin
         end;
         PluginSettings.Free;
     end else begin
-        // Load and free the plug-in just to check for its presence.
-        if not LoadInputPlugin('Winamp Plug-ins\'+mp3PROPlugIn) then
-            LoadInputPlugin(mp3PROPlugIn);
-        FreeInputPlugin;
-
-        WriteLn;
-        WriteLn('Usage: mp3TYRE [switch]|[file]|[directory]|[switch]|...');
+        WriteLn('Usage: mp3TYRE [switch]|<file|directory>|[switch]|[file|directory]|...');
         WriteLn;
         WriteLn('Switches (defaults are UPPER CASE):');
         WriteLn('/c<+|->',#9,'Enable / DISABLE cleaning of MP3 files');
