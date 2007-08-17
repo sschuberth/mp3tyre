@@ -78,7 +78,11 @@ begin
     while Tag2.Read(Input) do begin
         WriteLn('Skipping ID3v',Tag2.GetVersionString,' tag of ',SizeOf(TID3v2Header)+Tag2.GetDataSize,' bytes.');
         if Tag2.HasInvalidPadding then begin
-            WriteLn('The tag contains invalid (i.e. non-zero) padding.');
+            Write('The tag contains invalid (i.e. non-zero) padding.');
+            if CleanFiles then begin
+                Write(' This has been fixed.');
+            end;
+            WriteLn;
             Result.HasInvalidPadding:=True;
         end;
         if Result.HasID3v2Tag=False then begin
@@ -166,8 +170,14 @@ begin
     end;
 
     if CleanFiles then begin
+        Inc(JunkBytes,PadBytes);
+        if JunkBytes>0 then begin
+            WriteLn('Cleaning a total of ',JunkBytes,' bytes from the beginning of the file.');
+        end;
+
         // Copy all valid consecutive MP3 frames.
-        Input.Seek(Output.Position+PadBytes+JunkBytes,soFromBeginning);
+        Input.Seek(Output.Position+JunkBytes,soFromBeginning);
+
         JunkBytes:=0;
         repeat
             // Skip one byte if there no valid MP3 frame at this position.
@@ -369,7 +379,7 @@ var
             end else begin
                 WriteLn(', skipping.');
             end;
-            
+
             WriteLn;
         end;
         FileSearch.Free;
@@ -497,6 +507,9 @@ end;
 begin
     WriteLn('mp3TYRE (MP3 TYpe REnamer) version ',GetVersionString);
     WriteLn('(C)opyright 2002-2007 by S. Schuberth <sschuberth_AT_gmail_DOT_com>',#13,#10);
+
+    WriteLn('This program currently only supports ID3v1 and ID3v2 tags. Any other tags will');
+    WriteLn('be regarded as junk data and removed if cleaning is enabled.',#13,#10);
 
     // In order to detect mp3PRO files, Coding Technologies' Winamp plug-in
     // for mp3PRO playback is required. You may download it at:
