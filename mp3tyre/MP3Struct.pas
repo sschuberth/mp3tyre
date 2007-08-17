@@ -42,6 +42,7 @@ type
         Genre:Byte;
     end;
 
+    // See <http://www.id3.org/id3v2.4.0-structure.txt> for details.
     TSynchsafeLongword=packed class(TObject)
       public
         function GetValue:Longword;
@@ -57,7 +58,6 @@ type
         property AccessByte[Index:Integer]:Byte read GetByte write SetByte; default;
     end;
 
-    // See <http://www.id3.org/id3v2.4.0-structure.txt> for details.
     TID3v2Header=packed record
         Identifier:array[0..2] of Char;
         Version:Word;
@@ -82,6 +82,8 @@ type
         function IsFooterPresent:Boolean;
 
         function GetDataSize:Longword;
+        
+        HasInvalidPadding:Boolean;
 
       private
         Header:TID3v2Header;
@@ -166,34 +168,6 @@ implementation
 type
     PIdentifier=^Longword;
 
-// TSynchsafeLongword
-
-function TSynchsafeLongword.GetByte(Index:Integer):Byte;
-begin
-    Result:=Data[Index];
-end;
-
-procedure TSynchsafeLongword.SetByte(Index:Integer;Value:Byte);
-begin
-    Data[Index]:=Value;
-end;
-
-function TSynchsafeLongword.GetValue:Longword;
-begin
-    Result:=GetByte(3)
-        +(Longword(GetByte(2)) shl 7)
-        +(Longword(GetByte(1)) shl 14)
-        +(Longword(GetByte(0)) shl 21);
-end;
-
-procedure TSynchsafeLongword.SetValue(Value:Longword);
-begin
-    SetByte(3,Value and $7f);
-    SetByte(2,(Value shr 7) and $7f);
-    SetByte(1,(Value shr 14) and $7f);
-    SetByte(0,(Value shr 21) and $7f);
-end;
-
 // TID3v1Tag
 
 function TID3v1Tag.Read(MP3:TFileStream):Boolean;
@@ -235,12 +209,41 @@ begin
     Result:=(Header[0]='T') and (Header[1]='A') and (Header[2]='G');
 end;
 
+// TSynchsafeLongword
+
+function TSynchsafeLongword.GetByte(Index:Integer):Byte;
+begin
+    Result:=Data[Index];
+end;
+
+procedure TSynchsafeLongword.SetByte(Index:Integer;Value:Byte);
+begin
+    Data[Index]:=Value;
+end;
+
+function TSynchsafeLongword.GetValue:Longword;
+begin
+    Result:=GetByte(3)
+        +(Longword(GetByte(2)) shl 7)
+        +(Longword(GetByte(1)) shl 14)
+        +(Longword(GetByte(0)) shl 21);
+end;
+
+procedure TSynchsafeLongword.SetValue(Value:Longword);
+begin
+    SetByte(3,Value and $7f);
+    SetByte(2,(Value shr 7) and $7f);
+    SetByte(1,(Value shr 14) and $7f);
+    SetByte(0,(Value shr 21) and $7f);
+end;
+
 // TID3v2Tag
 
 constructor TID3v2Tag.Create;
 begin
     inherited Create;
     Header.Size:=TSynchsafeLongword.Create;
+    HasInvalidPadding:=False;
 end;
 
 destructor TID3v2Tag.Destroy;
@@ -253,6 +256,8 @@ end;
 function TID3v2Tag.Read(MP3:TFileStream):Boolean;
 var
     BytesRead:Integer;
+    Offset,NewOffset:Longword;
+    Size:TSynchsafeLongword;
 begin
     Result:=False;
 
@@ -279,9 +284,44 @@ begin
         if Longword(BytesRead)<>GetDataSize then begin
             MP3.Seek(-BytesRead,soFromCurrent);
             Finalize(Data);
-        end else begin
-            Result:=True;
+            Exit;
         end;
+
+        if not IsFooterPresent then begin
+            // Try to find invalid (i.e. non-zero) padding within the tag.
+            NewOffset:=0;
+            Size:=TSynchsafeLongword.Create;
+            if IsExtensionPresent then begin
+               Move(Data,Size.Data,SizeOf(Size.Data));
+               Inc(NewOffset,Size.GetValue);
+            end;
+            
+            // Find the first invalid frame.
+            repeat
+                Offset:=NewOffset;
+                Move(Data[Offset+4],Size.Data,SizeOf(Size.Data));
+                NewOffset:=Offset+4+SizeOf(Size.Data)+2+Size.GetValue;
+            until (NewOffset>=GetDataSize)
+                or not (Chr(Data[Offset+0]) in ['A'..'Z','0'..'9'])
+                or not (Chr(Data[Offset+1]) in ['A'..'Z','0'..'9'])
+                or not (Chr(Data[Offset+2]) in ['A'..'Z','0'..'9'])
+                or not (Chr(Data[Offset+3]) in ['A'..'Z','0'..'9']);
+
+            // Make sure any invalid padding is cleared to zeros.
+            for NewOffset:=Offset to GetDataSize-1 do begin
+                if Data[NewOffset]<>0 then begin
+                    HasInvalidPadding:=True;
+                    break;
+                end;
+            end;
+            if HasInvalidPadding then begin
+                FillChar(Data[Offset],GetDataSize-Offset,0);
+            end;
+
+            Size.Free;
+        end;
+        
+        Result:=True;
     end else begin
         MP3.Seek(-SizeOf(TID3v2Header),soFromCurrent);
     end;

@@ -12,7 +12,8 @@ type
     TMP3CheckResult=record
         FileType:TMP3FileType;
         HasID3v2Tag:Boolean;
-        HasNonStandardPadding:Boolean;
+        HasInvalidPadding:Boolean;
+        HasIllegalPadding:Boolean;
         HasWAVEHeader:Boolean;
         HasJunkData:Boolean;
     end;
@@ -22,6 +23,8 @@ type
 
 var
     PluginSettings:TRegistry;
+    WinampSettings:TRegistry;
+    WinampPlugin:string;
     CleanFiles:Boolean;
     IndicateMP3Pro:Integer;
     MP3Extensions:TStringList;
@@ -60,7 +63,8 @@ var
 begin
     Result.FileType:=mftNone;
     Result.HasID3v2Tag:=False;
-    Result.HasNonStandardPadding:=False;
+    Result.HasInvalidPadding:=False;
+    Result.HasIllegalPadding:=False;
     Result.HasWAVEHeader:=False;
     Result.HasJunkData:=False;
 
@@ -73,6 +77,10 @@ begin
     Tag2:=TID3v2Tag.Create;
     while Tag2.Read(Input) do begin
         WriteLn('Skipping ID3v',Tag2.GetVersionString,' tag of ',SizeOf(TID3v2Header)+Tag2.GetDataSize,' bytes.');
+        if Tag2.HasInvalidPadding then begin
+            WriteLn('The tag contains invalid (i.e. non-zero) padding.');
+            Result.HasInvalidPadding:=True;
+        end;
         if Result.HasID3v2Tag=False then begin
             // Write out only the first tag that has been found.
             if CleanFiles then begin
@@ -88,8 +96,8 @@ begin
 
     PadBytes:=0;
     if Result.HasID3v2Tag then begin
-        // Some programs put illegal zero-bytes between tag and first frame. Allow up
-        // to 64kb of zero-bytes to be skipped.
+        // Some programs put illegal zero-bytes between the end of the tag and
+        // the first MP3 frame. Allow up to 64kb of zero-bytes to be skipped.
         New(Buffer);
         BytesRead:=Input.Read(Buffer^,SizeOf(Buffer^));
         while (PadBytes<BytesRead) and (Buffer^[PadBytes]=0) do begin
@@ -97,8 +105,8 @@ begin
         end;
         Input.Seek(-BytesRead+PadBytes,soFromCurrent);
         if PadBytes>0 then begin
-            WriteLn('Skipping non-standard tag padding of ',PadBytes,' bytes.');
-            Result.HasNonStandardPadding:=True;
+            WriteLn('Skipping illegal padding of ',PadBytes,' bytes following the tag.');
+            Result.HasIllegalPadding:=True;
         end;
         Dispose(Buffer);
     end;
@@ -203,7 +211,7 @@ end;
 
 function LoadInputPlugin(FileName:string):Boolean;
 begin
-    WriteLn('Trying to load Winamp plug-in "'+FileName+'" ...');
+    Write('Loading "'+FileName+'" ... ');
     Result:=LoadInModule(FileName);
     if Result then begin
         with InputPlugin^ do begin
@@ -221,9 +229,10 @@ begin
 
             Init;
         end;
+        WriteLn('found.');
         WriteLn('Input plug-in "',InputPlugin^.Description,'" successfully loaded.');
     end else begin
-        WriteLn('Failed to load plug-in.');
+        WriteLn('not found.');
     end;
 end;
 
@@ -301,7 +310,7 @@ var
     ProcessedTypes:set of TMP3FileType;
 
     AnalyzeCount:array[TMP3FileType] of Integer;
-    TagCount,PaddingCount,WAVECount,JunkCount:array[1..4] of Integer;
+    TagCount,InvalidPadCount,IllegalPadCount,WAVECount,JunkCount:array[1..4] of Integer;
     ProcessCount,RenameCount:array[1..4] of Integer;
 
     procedure RenameFilesByType(Path:string);
@@ -326,7 +335,7 @@ var
         for i:=0 to FileSearch.List.Count-1 do begin
             Path:=ExpandFileName(FileSearch.List[i]);
 
-            Write(#13,#10,'Analyzing file "');
+            Write('Analyzing file "');
             if FullPath then begin
                 Write(Path);
             end else begin
@@ -337,7 +346,8 @@ var
             CheckResult:=IdentifyMP3File(Path);
             Inc(AnalyzeCount[CheckResult.FileType]);
             Inc(TagCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasID3v2Tag));
-            Inc(PaddingCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasNonStandardPadding));
+            Inc(InvalidPadCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasInvalidPadding));
+            Inc(IllegalPadCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasIllegalPadding));
             Inc(WAVECount[Ord(CheckResult.FileType)],Ord(CheckResult.HasWAVEHeader));
             Inc(JunkCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasJunkData));
 
@@ -359,6 +369,8 @@ var
             end else begin
                 WriteLn(', skipping.');
             end;
+            
+            WriteLn;
         end;
         FileSearch.Free;
     end;
@@ -383,7 +395,8 @@ begin
     // Initialize statistic counters.
     FillChar(AnalyzeCount,SizeOf(AnalyzeCount),0);
     FillChar(TagCount,SizeOf(TagCount),0);
-    FillChar(PaddingCount,SizeOf(PaddingCount),0);
+    FillChar(InvalidPadCount,SizeOf(InvalidPadCount),0);
+    FillChar(IllegalPadCount,SizeOf(IllegalPadCount),0);
     FillChar(WAVECount,SizeOf(WAVECount),0);
     FillChar(JunkCount,SizeOf(JunkCount),0);
 
@@ -466,45 +479,62 @@ begin
         end;
     end;
 
-    WriteLn;
     WriteLn('Statistics                Total     CBR     VBR  ProCBR  ProVBR  unknown');
     WriteLn('-------------------------------------------------------------------------');
 
-    Write('Analyzed files         : ',AnalyzeCount[mftNone]+AnalyzeCount[mftCBR]+AnalyzeCount[mftVBR]+AnalyzeCount[mftProCBR]+AnalyzeCount[mftProVBR]:6);
+    Write('Analyzed files       : ',AnalyzeCount[mftNone]+AnalyzeCount[mftCBR]+AnalyzeCount[mftVBR]+AnalyzeCount[mftProCBR]+AnalyzeCount[mftProVBR]:6);
     WriteLn(' (',AnalyzeCount[mftCBR]:6,', ',AnalyzeCount[mftVBR]:6,', ',AnalyzeCount[mftProCBR]:6,', ',AnalyzeCount[mftProVBR]:6,', ',AnalyzeCount[mftNone]:7,')');
-    WriteStatistics(#195+' ID3v2 tag            : ',TagCount);
-    WriteStatistics(#195+' Non-standard padding : ',PaddingCount);
-    WriteStatistics(#195+' WAVE header          : ',WAVECount);
-    WriteStatistics(#192+' Junk data            : ',JunkCount);
+    WriteStatistics(#195+' ID3v2 tag          : ',TagCount);
+    WriteStatistics(#195+' Invalid padding    : ',InvalidPadCount);
+    WriteStatistics(#195+' Illegal padding    : ',IllegalPadCount);
+    WriteStatistics(#195+' WAVE header        : ',WAVECount);
+    WriteStatistics(#192+' Junk data          : ',JunkCount);
 
-    WriteStatistics('Processed files        : ',ProcessCount);
-    WriteStatistics('Renamed successfully   : ',RenameCount);
+    WriteStatistics('Processed files      : ',ProcessCount);
+    WriteStatistics('Renamed successfully : ',RenameCount);
 end;
 
 begin
     WriteLn('mp3TYRE (MP3 TYpe REnamer) version ',GetVersionString);
     WriteLn('(C)opyright 2002-2007 by S. Schuberth <sschuberth_AT_gmail_DOT_com>',#13,#10);
 
+    // In order to detect mp3PRO files, Coding Technologies' Winamp plug-in
+    // for mp3PRO playback is required. You may download it at:
+    // <http://www.mp3prozone.com/assets/mp3PROAudioDecoder.exe>
+
+    // Tell the plug-in to indicate mp3PRO streams in Winamp's display.
+    PluginSettings:=TRegistry.Create;
+    PluginSettings.LazyWrite:=False;
+    PluginSettings.RootKey:=HKEY_CURRENT_USER;
+
+    // Default is to indicate mp3PRO files.
+    IndicateMP3Pro:=1;
+    if PluginSettings.OpenKey('\Software\Coding Technologies\mp3PROplugin for Winamp\Settings',False) then begin
+        IndicateMP3Pro:=PluginSettings.ReadInteger('Indicate mp3PRO');
+        PluginSettings.WriteInteger('Indicate mp3PRO',1);
+    end;
+
+    WriteLn('Searching for the mp3PRO Winamp plug-in.');
+    if not LoadInputPlugin(mp3PROPlugIn) then begin
+        WinampSettings:=TRegistry.Create;
+        WinampSettings.RootKey:=HKEY_CURRENT_USER;
+
+        if WinampSettings.OpenKey('\Software\Winamp',False) then begin
+            WinampPlugin:=WinampSettings.ReadString('');
+            WinampSettings.CloseKey;
+        end;
+
+        WinampSettings.Free;
+
+        WinampPlugin:=WinampPlugin+'\Plugins\'+mp3PROPlugIn;
+        if not LoadInputPlugin(WinampPlugin) then begin
+            WriteLn('mp3PRO files will not be detected.');
+        end;
+    end;
+
+    WriteLn;
+
     if ParamCount>0 then begin
-        // In order to detect mp3PRO files, Coding Technologies' Winamp plug-in
-        // for mp3PRO playback is required. You may download it at:
-        // <http://www.mp3prozone.com/assets/mp3PROAudioDecoder.exe>
-
-        // Tell the plug-in to indicate mp3PRO streams in Winamp's display.
-        PluginSettings:=TRegistry.Create;
-        PluginSettings.LazyWrite:=False;
-        PluginSettings.RootKey:=HKEY_CURRENT_USER;
-
-        // Default is to indicate mp3PRO files.
-        IndicateMP3Pro:=1;
-        if PluginSettings.OpenKey('\Software\Coding Technologies\mp3PROplugin for Winamp\Settings',False) then begin
-            IndicateMP3Pro:=PluginSettings.ReadInteger('Indicate mp3PRO');
-            PluginSettings.WriteInteger('Indicate mp3PRO',1);
-        end;
-        if not LoadInputPlugin('Winamp Plug-ins\'+mp3PROPlugIn) then begin
-            LoadInputPlugin(mp3PROPlugIn);
-        end;
-
         MP3Extensions:=TStringList.Create;
         MP3Extensions.Add('.cbr');
         MP3Extensions.Add('.procbr');
@@ -512,22 +542,14 @@ begin
         MP3Extensions.Add('.provbr');
         ProcessParameters;
         MP3Extensions.Free;
-
-        // Restore the original plug-in settings.
-        FreeInputPlugin;
-        if PluginSettings.CurrentKey<>0 then begin
-            PluginSettings.WriteInteger('Indicate mp3PRO',IndicateMP3Pro);
-            PluginSettings.CloseKey;
-        end;
-        PluginSettings.Free;
     end else begin
         WriteLn('Usage: mp3TYRE [switch]|<file|directory>|[switch]|[file|directory]|...');
         WriteLn;
         WriteLn('Switches (defaults are UPPER CASE):');
-        WriteLn('/c<+|->',#9,'Enable / DISABLE cleaning of MP3 files');
-        WriteLn('/p<+|->',#9,'Enable / DISABLE printing of full paths');
-        WriteLn('/r<+|->',#9,'Enable / DISABLE recursive processing of directories');
-        WriteLn('/s<+|->',#9,'ENABLE / disable simulation mode (files are not renamed)');
+        WriteLn('/c<+|->',#9,#9,'Enable / DISABLE cleaning of MP3 files');
+        WriteLn('/p<+|->',#9,#9,'Enable / DISABLE printing of full paths');
+        WriteLn('/r<+|->',#9,#9,'Enable / DISABLE recursive processing of directories');
+        WriteLn('/s<+|->',#9,#9,'ENABLE / disable simulation mode (files are not renamed)');
         WriteLn('/cbr<+|->',#9,'INCLUDE / exclude processing of constant bitrate MP3 files');
         WriteLn('/vbr<+|->',#9,'INCLUDE / exclude processing of variable bitrate MP3 files');
         WriteLn('/procbr<+|->',#9,'INCLUDE / exclude processing of CBR mp3PRO files');
@@ -536,4 +558,13 @@ begin
         WriteLn('Switches, files and directories may be specified in any order. Switches are');
         WriteLn('valid for all following files or directories until another switch is specified.');
     end;
+
+    FreeInputPlugin;
+
+    // Restore the original plug-in settings.
+    if PluginSettings.CurrentKey<>0 then begin
+        PluginSettings.WriteInteger('Indicate mp3PRO',IndicateMP3Pro);
+        PluginSettings.CloseKey;
+    end;
+    PluginSettings.Free;
 end.
