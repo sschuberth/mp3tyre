@@ -526,8 +526,7 @@ begin
 
         WinampSettings.Free;
 
-        WinampPlugin:=WinampPlugin+'\Plugins\'+mp3PROPlugIn;
-        if not LoadInputPlugin(WinampPlugin) then begin
+        if (Length(WinampPlugin)=0) or not LoadInputPlugin(WinampPlugin+'\Plugins\'+mp3PROPlugIn) then begin
             WriteLn('mp3PRO files will not be detected.');
         end;
     end;
