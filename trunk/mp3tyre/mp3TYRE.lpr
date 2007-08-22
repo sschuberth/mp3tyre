@@ -2,6 +2,8 @@ program mp3TYRE;
 
 {$APPTYPE CONSOLE}
 
+{$R resources\mp3TYRE.res}
+
 uses
     Classes,Registry,StrUtils,SysUtils,Windows,
     FileUtils,MP3Struct,WinampPlugin;
