@@ -16,6 +16,7 @@ type
         HasIllegalPadding:Boolean;
         HasWAVEHeader:Boolean;
         HasJunkData:Boolean;
+        HasID3v1Tag:Boolean;
     end;
 
     TSegmentBuffer=array[0..65535] of Byte;
@@ -25,7 +26,7 @@ var
     PluginSettings:TRegistry;
     WinampSettings:TRegistry;
     WinampPlugin:string;
-    CleanFiles:Boolean;
+    CleanFiles,SimulateActions:Boolean;
     IndicateMP3Pro:Integer;
     MP3Extensions:TStringList;
 
@@ -67,27 +68,44 @@ begin
     Result.HasIllegalPadding:=False;
     Result.HasWAVEHeader:=False;
     Result.HasJunkData:=False;
+    Result.HasID3v1Tag:=False;
 
     Input:=TFileStream.Create(FileName,fmOpenRead or fmShareDenyWrite);
-    if CleanFiles then begin
+    if CleanFiles and (not SimulateActions) then begin
         Output:=TFileStream.Create(FileName+'.cleaned',fmCreate or fmShareExclusive);
     end;
 
     // Skip any ID3v2 tags.
     Tag2:=TID3v2Tag.Create;
     while Tag2.Read(Input) do begin
-        WriteLn('Skipping ID3v',Tag2.GetVersionString,' tag of ',SizeOf(TID3v2Header)+Tag2.GetDataSize,' bytes.');
+        Write('Found ID3v',Tag2.GetVersionString,' tag of ',SizeOf(TID3v2Header)+Tag2.GetDataSize,' bytes, ');
+        if CleanFiles then begin
+            Write('copying (first tag only).');
+            if SimulateActions then begin
+                Write(' [SIMULATION]');
+            end;
+            WriteLn;
+        end else begin
+            WriteLn('skipping.');
+        end;
+
         if Tag2.HasInvalidPadding then begin
-            Write('The tag contains invalid (i.e. non-zero) padding.');
+            Write('The tag contains invalid (i.e. non-zero) padding, ');
             if CleanFiles then begin
-                Write(' This has been fixed.');
+                Write('fixed.');
+                if SimulateActions then begin
+                    Write(' [SIMULATION]');
+                end;
+            end else begin
+                Write('ignored.');
             end;
             WriteLn;
             Result.HasInvalidPadding:=True;
         end;
+
         if Result.HasID3v2Tag=False then begin
             // Write out only the first tag that has been found.
-            if CleanFiles then begin
+            if CleanFiles and (not SimulateActions) then begin
                 // Be sure the tag is only written if CleanFiles is enabled.
                 if not Tag2.Write(Output) then begin
                     WriteLn('Error writing tag to cleaned output file.');
@@ -158,10 +176,10 @@ begin
 
         if Result.FileType<>mftNone then begin
             if JunkBytes>0 then begin
-                WriteLn('Skipping junk data of ',JunkBytes,' bytes before first frame.');
+                WriteLn('Skipping junk data of ',JunkBytes,' bytes before first audio frame.');
                 Result.HasJunkData:=True;
             end;
-            WriteLn('Found ',Version,' audio frame.');
+            WriteLn('Found first ',Version,' audio frame.');
         end;
     except
         on ERangeError do begin
@@ -170,13 +188,10 @@ begin
     end;
 
     if CleanFiles then begin
-        Inc(JunkBytes,PadBytes);
-        if JunkBytes>0 then begin
-            WriteLn('Cleaning a total of ',JunkBytes,' bytes from the beginning of the file.');
-        end;
-
         // Copy all valid consecutive MP3 frames.
-        Input.Seek(Output.Position+JunkBytes,soFromBeginning);
+        if not SimulateActions then begin
+            Input.Seek(Output.Position+PadBytes+JunkBytes,soFromBeginning);
+        end;
 
         JunkBytes:=0;
         repeat
@@ -189,24 +204,46 @@ begin
             // We do not care for errors here.
             if JunkBytes<MaxJunkBytes then begin
                 // Be sure the tag is only written if we did not reach MaxJunkBytes.
-                if not Frame.Write(Output) then begin
+                if (not SimulateActions) and (not Frame.Write(Output)) then begin
                     WriteLn('Error writing frame to cleaned output file.');
+                end else begin
+                    if JunkBytes>0 then begin
+                        WriteLn('Skipped junk data of ',JunkBytes,' bytes in between audio frames.');
+                        JunkBytes:=0;
+                    end;
                 end;
             end;
         until JunkBytes=MaxJunkBytes;
 
-        // If there is more data, and this data is an ID3v1 tag, copy it, too.
-        Input.Seek(-ID3v1TagSize,soFromEnd);
-        Tag1:=TID3v1Tag.Create;
-        Tag1.Read(Input);
-        Tag1.Write(Output);
-        Tag1.Free;
+        if Input.Position<Input.Size then begin
+           WriteLn('There is too much junk in between audio frames, aborting.');
+        end;
     end;
 
     Frame.Free;
 
+    // If there is more data, and this data is an ID3v1 tag, copy it, too.
+    Input.Seek(-ID3v1TagSize,soFromEnd);
+    Tag1:=TID3v1Tag.Create;
+    if Tag1.Read(Input) then begin
+        Result.HasID3v1Tag:=True;
+        Write('Found ID3v1 tag at end of file, ');
+        if CleanFiles then begin
+            Write('copying.');
+            if SimulateActions then begin
+                Write(' [SIMULATION]');
+            end else begin
+                Tag1.Write(Output);
+            end;
+            WriteLn;
+        end else begin
+            WriteLn('skipping.');
+        end;
+    end;
+    Tag1.Free;
+
     Input.Free;
-    if CleanFiles then begin
+    if CleanFiles and (not SimulateActions) then begin
         Output.Free;
         DeleteFile(PChar(FileName));
         RenameFile(FileName+'.cleaned',FileName);
@@ -316,11 +353,11 @@ end;
 
 procedure ProcessParameters;
 var
-    FullPath,RecurseDirectory,SimulateRename:Boolean;
+    FullPath,RecurseDirectory:Boolean;
     ProcessedTypes:set of TMP3FileType;
 
     AnalyzeCount:array[TMP3FileType] of Integer;
-    TagCount,InvalidPadCount,IllegalPadCount,WAVECount,JunkCount:array[1..4] of Integer;
+    ID3v2Count,InvalidPadCount,IllegalPadCount,WAVECount,JunkCount,ID3v1Count:array[1..4] of Integer;
     ProcessCount,RenameCount:array[1..4] of Integer;
 
     procedure RenameFilesByType(Path:string);
@@ -355,17 +392,18 @@ var
 
             CheckResult:=IdentifyMP3File(Path);
             Inc(AnalyzeCount[CheckResult.FileType]);
-            Inc(TagCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasID3v2Tag));
+            Inc(ID3v2Count[Ord(CheckResult.FileType)],Ord(CheckResult.HasID3v2Tag));
             Inc(InvalidPadCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasInvalidPadding));
             Inc(IllegalPadCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasIllegalPadding));
             Inc(WAVECount[Ord(CheckResult.FileType)],Ord(CheckResult.HasWAVEHeader));
             Inc(JunkCount[Ord(CheckResult.FileType)],Ord(CheckResult.HasJunkData));
+            Inc(ID3v1Count[Ord(CheckResult.FileType)],Ord(CheckResult.HasID3v1Tag));
 
             Write('This is ',BitrateMode[CheckResult.FileType],' file');
             if CheckResult.FileType in ProcessedTypes then begin
                 WriteLn('.');
                 Inc(ProcessCount[Ord(CheckResult.FileType)]);
-                if not SimulateRename then begin
+                if not SimulateActions then begin
                     if AddTypeExtension(Path,CheckResult.FileType) then begin
                         Inc(RenameCount[Ord(CheckResult.FileType)]);
                         Write('The file has successfully');
@@ -374,10 +412,10 @@ var
                     end;
                     WriteLn(' been renamed.');
                 end else begin
-                    WriteLn('The file has not been renamed (simulation mode).');
+                    WriteLn('The file has successfully been renamed. [SIMULATION]');
                 end;
             end else begin
-                WriteLn(', skipping.');
+                WriteLn(', skipping rename.');
             end;
 
             WriteLn;
@@ -399,16 +437,17 @@ begin
     CleanFiles:=False;
     FullPath:=False;
     RecurseDirectory:=False;
-    SimulateRename:=True;
+    SimulateActions:=True;
     ProcessedTypes:=[mftCBR,mftProCBR,mftVBR,mftProVBR];
 
     // Initialize statistic counters.
     FillChar(AnalyzeCount,SizeOf(AnalyzeCount),0);
-    FillChar(TagCount,SizeOf(TagCount),0);
+    FillChar(ID3v2Count,SizeOf(ID3v2Count),0);
     FillChar(InvalidPadCount,SizeOf(InvalidPadCount),0);
     FillChar(IllegalPadCount,SizeOf(IllegalPadCount),0);
     FillChar(WAVECount,SizeOf(WAVECount),0);
     FillChar(JunkCount,SizeOf(JunkCount),0);
+    FillChar(ID3v1Count,SizeOf(ID3v1Count),0);
 
     FillChar(ProcessCount,SizeOf(ProcessCount),0);
     FillChar(RenameCount,SizeOf(RenameCount),0);
@@ -445,9 +484,9 @@ begin
                 // Toggle simulate flag.
                 if Parameter[2]='s' then begin
                     if Parameter[3]='+' then begin
-                        SimulateRename:=True;
+                        SimulateActions:=True;
                     end else if Parameter[3]='-' then begin
-                        SimulateRename:=False;
+                        SimulateActions:=False;
                     end;
                 end;
             end else begin
@@ -494,11 +533,12 @@ begin
 
     Write('Analyzed files       : ',AnalyzeCount[mftNone]+AnalyzeCount[mftCBR]+AnalyzeCount[mftVBR]+AnalyzeCount[mftProCBR]+AnalyzeCount[mftProVBR]:6);
     WriteLn(' (',AnalyzeCount[mftCBR]:6,', ',AnalyzeCount[mftVBR]:6,', ',AnalyzeCount[mftProCBR]:6,', ',AnalyzeCount[mftProVBR]:6,', ',AnalyzeCount[mftNone]:7,')');
-    WriteStatistics(#195+' ID3v2 tag          : ',TagCount);
+    WriteStatistics(#195+' ID3v2 tag          : ',ID3v2Count);
     WriteStatistics(#195+' Invalid padding    : ',InvalidPadCount);
     WriteStatistics(#195+' Illegal padding    : ',IllegalPadCount);
     WriteStatistics(#195+' WAVE header        : ',WAVECount);
-    WriteStatistics(#192+' Junk data          : ',JunkCount);
+    WriteStatistics(#195+' Junk data          : ',JunkCount);
+    WriteStatistics(#192+' ID3v1 tag          : ',ID3v1Count);
 
     WriteStatistics('Processed files      : ',ProcessCount);
     WriteStatistics('Renamed successfully : ',RenameCount);
@@ -508,8 +548,8 @@ begin
     WriteLn('mp3TYRE (MP3 TYpe REnamer) version ',GetVersionString);
     WriteLn('(C)opyright 2002-2007 by S. Schuberth <sschuberth_AT_gmail_DOT_com>',#13,#10);
 
-    WriteLn('This program currently only supports ID3v1 and ID3v2 tags. Any other tags will');
-    WriteLn('be regarded as junk data and removed if cleaning is enabled.',#13,#10);
+    WriteLn('NOTE: This program currently only supports ID3v1 and ID3v2 tags. Any other tags');
+    WriteLn('will be regarded as junk data and removed if cleaning is enabled.',#13,#10);
 
     // In order to detect mp3PRO files, Coding Technologies' Winamp plug-in
     // for mp3PRO playback is required. You may download it at:
@@ -561,7 +601,7 @@ begin
         WriteLn('/c<+|->',#9,#9,'Enable / DISABLE cleaning of MP3 files');
         WriteLn('/p<+|->',#9,#9,'Enable / DISABLE printing of full paths');
         WriteLn('/r<+|->',#9,#9,'Enable / DISABLE recursive processing of directories');
-        WriteLn('/s<+|->',#9,#9,'ENABLE / disable simulation mode (files are not renamed)');
+        WriteLn('/s<+|->',#9,#9,'ENABLE / disable simulation mode (no actions are performed)');
         WriteLn('/cbr<+|->',#9,'INCLUDE / exclude processing of constant bitrate MP3 files');
         WriteLn('/vbr<+|->',#9,'INCLUDE / exclude processing of variable bitrate MP3 files');
         WriteLn('/procbr<+|->',#9,'INCLUDE / exclude processing of CBR mp3PRO files');
