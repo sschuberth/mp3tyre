@@ -582,7 +582,8 @@ begin
         WinampSettings.Free;
 
         if (Length(WinampPlugin)=0) or not LoadInputPlugin(WinampPlugin+'\Plugins\'+mp3PROPlugIn) then begin
-            WriteLn('mp3PRO files will not be detected.');
+            WriteLn('mp3PRO files will not be detected. You may get the plug-in from');
+            WriteLn('http://www.mp3prozone.com/assets/mp3PROAudioDecoder.exe');
         end;
     end;
 
