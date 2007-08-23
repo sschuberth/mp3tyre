@@ -8,13 +8,25 @@ Legend:
 History:
 --------
 
+mp3TYRE-10.2007.aug.24
++ Added support for detecting and correcting invalid padding inside ID3v2 tags.
++ Added explicit support for ID3v1 tags (which were previously handled but not
+  reported).
++ The executable now has an icon.
+* mp3TYRE is now hosted as an Open Source project on Google Code.
+* Changed compiler to most recent Free Pascal / Lazarus accompanied by several
+  code clean-ups.
+* Look for the mp3PRO plug-in also in Winamp's plug-in directory.
+* Reworked and added more status messages.
+* Simulation now also affects cleaning, not only renaming.
+
 mp3TYRE-9.2006.feb.19
 + Optionally write out a cleaned MP3 file.
 * Also search for the mp3PRO plug-in in the local directory.
 * Reformatted some output messages
 
 mp3TYRE-8.2006.jan.15
-* Made mp3TYRE compile with FreePascal 2.0.2.
+* Made mp3TYRE compile with Free Pascal 2.0.2.
 
 mp3TYRE-7.2005.nov.30
 * Changed some information printed out to screen
@@ -39,7 +51,8 @@ mp3TYRE-4.2003.jul.09
 
 mp3TYRE-3.2003.mai.06
 + Default file mask is "*.mp3"
-+ Command line switches to separately include / exclude processing of CBR, VBR and mp3PRO files
++ Command line switches to separately include / exclude processing of CBR, VBR
+  and mp3PRO files
 * Source code clean-up
 * Cosmetic improvements
 * Simulation mode is enabled by default
