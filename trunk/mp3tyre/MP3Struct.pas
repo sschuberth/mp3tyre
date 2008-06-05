@@ -82,7 +82,7 @@ type
         function IsFooterPresent:Boolean;
 
         function GetDataSize:Longword;
-        
+
         HasInvalidPadding:Boolean;
 
       private
@@ -295,7 +295,7 @@ begin
                Move(Data,Size.Data,SizeOf(Size.Data));
                Inc(NewOffset,Size.GetValue);
             end;
-            
+
             // Find the first invalid frame.
             repeat
                 Offset:=NewOffset;
@@ -320,7 +320,7 @@ begin
 
             Size.Free;
         end;
-        
+
         Result:=True;
     end else begin
         MP3.Seek(-SizeOf(TID3v2Header),soFromCurrent);
